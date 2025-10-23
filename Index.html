@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Training Portal Login</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to bottom right, #1a1a40, #000);
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      background: #2a2a60;
+      color: white;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      background: gold;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div class="container" id="loginScreen">
+    <h1>🌟 Divine Creative Wisdom</h1>
+    <p>Please log in to access your training portal:</p>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div class="container hidden" id="dashboard">
+    <h2 id="welcomeText">Welcome!</h2>
+    <label for="appSelect">Choose a service or app:</label><br/><br/>
+    <select id="appSelect">
+      <option value="">-- Select an option --</option>
+      <option value="web-composer-companion.html">🎼 Web Composer Companion</option>
+      <option value="web-composer-1.html">🎹 Web Composer 1.0</option>
+      <option value="learning-prompting.html">🧠 Learning Prompting Like a Pro</option>
+      <option value="english-pronunciation.html">🗣️ English Pronunciation</option>
+      <option value="learning-math.html">➗ Learning Math</option>
+      <option value="education-learning.html">🎓 Education & Learning</option>
+      <option value="art-design.html">🎨 Art & Design</option>
+      <option value="music-audio.html">🎵 Music & Audio</option>
+      <option value="business-productivity.html">💼 Business & Productivity</option>
+      <option value="data-analytics.html">📊 Data & Analytics</option>
+      <option value="software-development.html">💻 Software Development</option>
+      <option value="communication-content.html">🗨️ Communication & Content</option>
+      <option value="science-research.html">🔬 Science & Research</option>
+      <option value="shopping-travel.html">🧳 Shopping & Travel</option>
+      <option value="wellness-lifestyle.html">🧘 Wellness & Lifestyle</option>
+      <option value="legal-finance.html">⚖️ Legal & Finance</option>
+      <option value="social-community.html">🤝 Social & Community</option>
+      <option value="philosophy-spirituality.html">🕊️ Philosophy & Spirituality</option>
+    </select>
+    <br/>
+    <button onclick="goToApp()">Launch</button>
+  </div>
+
+  <script>
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user && pass) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('welcomeText').textContent = `Welcome, ${user}!`;
+      } else {
+        alert("Please enter both username and password.");
+      }
+    }
+
+    function goToApp() {
+      const selected = document.getElementById('appSelect').value;
+      if (selected) {
+        window.location.href = selected;
+      } else {
+        alert("Please select a service or app.");
+      }
+    }
+  </script>
+</body>
+</html>
