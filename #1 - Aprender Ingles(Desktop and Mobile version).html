@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diccionario Interactivo</title>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --hover-color: #2980b9;
+      --background-color: #f0f4f8;
+      --text-color: #333;
+      --card-bg: white;
+      --border-radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--background-color);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2, h3 {
+      color: #2c3e50;
+      text-align: center;
+      margin: 20px 0 10px;
+    }
+
+    select, input, button, textarea {
+      font-size: 16px;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--hover-color);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 15px;
+    }
+
+    th {
+      background-color: #ecf0f1;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .translation-box {
+      margin-top: 30px;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .audio-button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--primary-color);
+      margin-left: 8px;
+    }
+
+    #rateControl {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 13px;
+        padding: 10px;
+      }
+
+      h2, h3 {
+        font-size: 18px;
+      }
+
+      select, input, button, textarea {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Selecciona una palabra:</h2>
+    <select id="wordSelector">
+      <option value="">-- Elige una palabra --</option>
+    </select>
+
+    <table id="wordTable">
+      <thead>
+        <tr>
+          <th>Inglés</th>
+          <th>Significado en inglés</th>
+          <th>Español</th>
+          <th>Significado en español</th>
+          <th>Pronunciación</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="translation-box">
+      <h3>Traduce tu oración:</h3>
+      <textarea id="spanishInput" placeholder="Escribe una o varias oraciones en español" rows="6" style="resize: vertical;"></textarea>
+      <button onclick="translateSentence()">Traducir</button>
+      <button onclick="clearTranslation()" style="background-color: #e74c3c;">Borrar</button>
+      <div id="translationResult"></div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <label for="rateControl"><strong>Velocidad de pronunciación:</strong></label><br/>
+      <input type="range" id="rateControl" min="0.5" max="2" step="0.1" value="1" />
+      <span id="rateValue">1.0</span>x
+    </div>
+  </div>
+
+  <script>
+const words = [
+  {
+    "word": "Work",
+    "translation": "Trabajo",
+    "pronunciation": "uérk",
+    "meaning": "Activity done to achieve a goal or earn money.",
+    "sentences": [
+      { "en": "She works hard every day.", "es": "Ella trabaja duro cada día.", "phon": "shi uérks jard évri déi" },
+      { "en": "Work brings results.", "es": "El trabajo trae resultados.", "phon": "uérk bríngs ri-sólts" },
+      { "en": "He went to work early.", "es": "Él fue al trabajo temprano.", "phon": "ji wént tu uérk ér-li" },
+      { "en": "We work as a team.", "es": "Trabajamos como equipo.", "phon": "wi uérk as a tím" },
+      { "en": "Work is important.", "es": "El trabajo es importante.", "phon": "uérk is im-pór-tant" }
+    ]
+  },
+  {
+    "word": "World",
+    "translation": "Mundo",
+    "pronunciation": "wérld",
+    "meaning": "The earth and all people, places, and things on it.",
+    "sentences": [
+      { "en": "The world is beautiful.", "es": "El mundo es hermoso.", "phon": "de wérld is biú-ti-ful" },
+      { "en": "She wants to travel the world.", "es": "Ella quiere viajar por el mundo.", "phon": "shi uánts tu trá-vel de wérld" },
+      { "en": "We live in a big world.", "es": "Vivimos en un mundo grande.", "phon": "wi lív in a big wérld" },
+      { "en": "The world needs peace.", "es": "El mundo necesita paz.", "phon": "de wérld níids pís" },
+      { "en": "He explored the world.", "es": "Él exploró el mundo.", "phon": "ji eks-plórd de wérld" }
+    ]
+  },
+  {
+    "word": "Write",
+    "translation": "Escribir",
+    "pronunciation": "ráit",
+    "meaning": "To form letters or words on a surface.",
+    "sentences": [
+      { "en": "I write every morning.", "es": "Escribo cada mañana.", "phon": "ai ráit évri mór-ning" },
+      { "en": "She wrote a letter.", "es": "Ella escribió una carta.", "phon": "shi róut a lé-ter" },
+      { "en": "We write stories together.", "es": "Escribimos historias juntos.", "phon": "wi ráit stó-ris tu-gé-der" },
+      { "en": "He writes poems.", "es": "Él escribe poemas.", "phon": "ji ráits pó-ems" },
+      { "en": "Writing helps me think.", "es": "Escribir me ayuda a pensar.", "phon": "rái-ting jelps mi zínk" }
+    ]
+  },
+  {
+    "word": "Yes",
+    "translation": "Sí",
+    "pronunciation": "yés",
+    "meaning": "Used to express agreement or affirmation.",
+    "sentences": [
+      { "en": "Yes, I understand.", "es": "Sí, entiendo.", "phon": "yés, ai an-der-stánd" },
+      { "en": "She said yes.", "es": "Ella dijo que sí.", "phon": "shi sé-d yés" },
+      { "en": "Yes, we can do it.", "es": "Sí, podemos hacerlo.", "phon": "yés, wi can dú it" },
+      { "en": "He answered yes.", "es": "Él respondió que sí.", "phon": "ji án-serd yés" },
+      { "en": "Yes is a powerful word.", "es": "Sí es una palabra poderosa.", "phon": "yés is a páu-er-ful wérd" }
+    ]
+  },
+  {
+    "word": "Accept",
+    "translation": "Aceptar",
+    "pronunciation": "ak-sépt",
+    "meaning": "To receive or agree to something offered.",
+    "sentences": [
+      { "en": "I accept your offer.", "es": "Acepto tu oferta.", "phon": "ai ak-sépt ior ó-fer" },
+      { "en": "She accepted the gift.", "es": "Ella aceptó el regalo.", "phon": "shi ak-sép-ted de gíft" },
+      { "en": "We accept the challenge.", "es": "Aceptamos el desafío.", "phon": "wi ak-sépt de chá-lench" },
+      { "en": "He accepted the truth.", "es": "Él aceptó la verdad.", "phon": "ji ak-sép-ted de trúz" },
+      { "en": "Accept yourself fully.", "es": "Acéptate completamente.", "phon": "ak-sépt ior-sélf fú-li" }
+    ]
+  },
+  {
+    "word": "Begin",
+    "translation": "Empezar",
+    "pronunciation": "be-gín",
+    "meaning": "To start doing something.",
+    "sentences": [
+      { "en": "Let's begin the lesson.", "es": "Empecemos la lección.", "phon": "lets be-gín de lé-son" },
+      { "en": "She began to cry.", "es": "Ella comenzó a llorar.", "phon": "shi be-gán tu crái" },
+      { "en": "We begin at noon.", "es": "Empezamos al mediodía.", "phon": "wi be-gín at núun" },
+      { "en": "He began writing.", "es": "Él comenzó a escribir.", "phon": "ji be-gán rái-ting" },
+      { "en": "Begin with a smile.", "es": "Empieza con una sonrisa.", "phon": "be-gín güit a smáil" }
+    ]
+  },
+  {
+    "word": "Change",
+    "translation": "Cambiar",
+    "pronunciation": "chéinch",
+    "meaning": "To make or become different.",
+    "sentences": [
+      { "en": "Change is necessary.", "es": "El cambio es necesario.", "phon": "chéinch is né-se-se-ri" },
+      { "en": "She changed her mind.", "es": "Ella cambió de opinión.", "phon": "shi chéincht jer máind" },
+      { "en": "We can change the world.", "es": "Podemos cambiar el mundo.", "phon": "wi can chéinch de wérld" },
+      { "en": "He changed his clothes.", "es": "Él cambió de ropa.", "phon": "ji chéincht jis clóuz" },
+      { "en": "Change starts with you.", "es": "El cambio empieza contigo.", "phon": "chéinch stárts güit iu" }
+    ]
+  },
+  {
+    "word": "Discover",
+    "translation": "Descubrir",
+    "pronunciation": "dis-kó-ver",
+    "meaning": "To find something new or unexpected.",
+    "sentences": [
+      { "en": "She discovered a secret.", "es": "Ella descubrió un secreto.", "phon": "shi dis-kó-verd a sí-kret" },
+      { "en": "We discover new ideas.", "es": "Descubrimos nuevas ideas.", "phon": "wi dis-kó-ver niu ai-dí-as" },
+      { "en": "He discovered a talent.", "es": "Él descubrió un talento.", "phon": "ji dis-kó-verd a tá-lent" },
+      { "en": "Discover your passion.", "es": "Descubre tu pasión.", "phon": "dis-kó-ver ior pá-shon" },
+      { "en": "They discovered the truth.", "es": "Descubrieron la verdad.", "phon": "dei dis-kó-verd de trúz" }
+    ]
+  },
+  {
+    "word": "Enjoy",
+    "translation": "Disfrutar",
+    "pronunciation": "en-yói",
+    "meaning": "To take pleasure in something.",
+    "sentences": [
+      { "en": "I enjoy music.", "es": "Disfruto la música.", "phon": "ai en-yói miú-sik" },
+      { "en": "She enjoys reading.", "es": "Ella disfruta leer.", "phon": "shi en-yóiz ríi-ding" },
+      { "en": "We enjoy the moment.", "es": "Disfrutamos el momento.", "phon": "wi en-yói de mó-ment" },
+      { "en": "He enjoys cooking.", "es": "Él disfruta cocinar.", "phon": "ji en-yóiz kú-king" },
+    { "en": "Enjoy your day.", "es": "Disfruta tu día.", "phon": "en-yói ior déi" }
+  ]
+},
+{
+  "word": "Focus",
+  "translation": "Enfocar",
+  "pronunciation": "fóu-kus",
+  "meaning": "To concentrate attention or effort.",
+  "sentences": [
+    { "en": "Focus on your goals.", "es": "Enfócate en tus metas.", "phon": "fóu-kus on ior góls" },
+    { "en": "She focused on her task.", "es": "Ella se enfocó en su tarea.", "phon": "shi fóu-kust on jer tásk" },
+    { "en": "We need to focus.", "es": "Necesitamos enfocarnos.", "phon": "wi níid tu fóu-kus" },
+    { "en": "He lost focus.", "es": "Él perdió el enfoque.", "phon": "ji lost fóu-kus" },
+    { "en": "Focus brings clarity.", "es": "El enfoque trae claridad.", "phon": "fóu-kus bríngs clá-ri-dad" }
+  ]
+},
+{
+  "word": "Believe",
+  "translation": "Creer",
+  "pronunciation": "be-lív",
+  "meaning": "To accept something as true or real.",
+  "sentences": [
+    { "en": "I believe in you.", "es": "Creo en ti.", "phon": "ai be-lív in iu" },
+    { "en": "She believes in miracles.", "es": "Ella cree en milagros.", "phon": "shi be-lívs in mí-ra-cols" },
+    { "en": "They believe it's possible.", "es": "Ellos creen que es posible.", "phon": "dei be-lív its pó-si-bol" },
+    { "en": "Believe in your dreams.", "es": "Cree en tus sueños.", "phon": "be-lív in ior dríms" },
+    { "en": "We believe in love.", "es": "Creemos en el amor.", "phon": "wi be-lív in lóv" }
+  ]
+},
+{
+  "word": "Courage",
+  "translation": "Valentía",
+  "pronunciation": "kó-raj",
+  "meaning": "The ability to face fear or danger.",
+  "sentences": [
+    { "en": "She showed great courage.", "es": "Ella mostró gran valentía.", "phon": "shi shóud gréit kó-raj" },
+    { "en": "Courage helps us grow.", "es": "La valentía nos ayuda a crecer.", "phon": "kó-raj jelps as gróu" },
+    { "en": "He acted with courage.", "es": "Él actuó con valentía.", "phon": "ji ák-ted güit kó-raj" },
+    { "en": "Courage is contagious.", "es": "La valentía es contagiosa.", "phon": "kó-raj is con-téi-yos" },
+    { "en": "Face life with courage.", "es": "Enfrenta la vida con valentía.", "phon": "féis láif güit kó-raj" }
+  ]
+},
+{
+  "word": "Dream",
+  "translation": "Soñar",
+  "pronunciation": "drím",
+  "meaning": "To imagine something you want to achieve.",
+  "sentences": [
+    { "en": "Dream big.", "es": "Sueña en grande.", "phon": "drím big" },
+    { "en": "She dreams of success.", "es": "Ella sueña con el éxito.", "phon": "shi dríms of sok-sés" },
+    { "en": "Dreams inspire action.", "es": "Los sueños inspiran acción.", "phon": "dríms in-spái-r ák-shon" },
+    { "en": "He followed his dream.", "es": "Él siguió su sueño.", "phon": "ji fó-loud jis drím" },
+    { "en": "Never stop dreaming.", "es": "Nunca dejes de soñar.", "phon": "né-ver stop drí-ming" }
+  ]
+},
+{
+  "word": "Inspire",
+  "translation": "Inspirar",
+  "pronunciation": "in-spái-er",
+  "meaning": "To fill someone with the urge to do something.",
+  "sentences": [
+    { "en": "She inspires others.", "es": "Ella inspira a otros.", "phon": "shi in-spái-ers ó-derz" },
+    { "en": "Inspire with your actions.", "es": "Inspira con tus acciones.", "phon": "in-spái-er güit ior ák-shons" },
+    { "en": "He was inspired by music.", "es": "Él fue inspirado por la música.", "phon": "ji wás in-spái-erd bai miú-sik" },
+    { "en": "Inspiration is powerful.", "es": "La inspiración es poderosa.", "phon": "in-spái-réi-shon is páu-er-ful" },
+    { "en": "We inspire each other.", "es": "Nos inspiramos mutuamente.", "phon": "wi in-spái-er ich ó-der" }
+  ]
+},
+{
+  "word": "Adapt",
+  "translation": "Adaptarse",
+  "pronunciation": "a-dápt",
+  "meaning": "To adjust to new conditions or environments.",
+  "sentences": [
+    { "en": "We must adapt to change.", "es": "Debemos adaptarnos al cambio.", "phon": "wi mást a-dápt tu chéinch" },
+    { "en": "She adapted quickly.", "es": "Ella se adaptó rápidamente.", "phon": "shi a-dáp-ted kuík-li" },
+    { "en": "Adapt and overcome.", "es": "Adáptate y supera.", "phon": "a-dápt and ó-ver-kám" },
+    { "en": "He adapted to the new job.", "es": "Él se adaptó al nuevo trabajo.", "phon": "ji a-dáp-ted tu de niú yób" },
+    { "en": "Adaptation is key to survival.", "es": "La adaptación es clave para sobrevivir.", "phon": "a-dáp-téi-shon is kíi tu ser-vái-val" }
+  ]
+},
+{
+  "word": "Balance",
+  "translation": "Equilibrio",
+  "pronunciation": "bá-lans",
+  "meaning": "A state where different things occur in equal or proper amounts.",
+  "sentences": [
+    { "en": "Find balance in life.", "es": "Encuentra equilibrio en la vida.", "phon": "faind bá-lans in láif" },
+    { "en": "She balances work and rest.", "es": "Ella equilibra trabajo y descanso.", "phon": "shi bá-lan-ses uérk and rést" },
+    { "en": "Balance is important.", "es": "El equilibrio es importante.", "phon": "bá-lans is im-pór-tant" },
+    { "en": "He lost his balance.", "es": "Él perdió el equilibrio.", "phon": "ji lost jis bá-lans" },
+    { "en": "Balance your priorities.", "es": "Equilibra tus prioridades.", "phon": "bá-lans ior prai-ó-ri-tis" }
+  ]
+},
+{
+  "word": "Calm",
+  "translation": "Calma",
+  "pronunciation": "kám",
+  "meaning": "A peaceful and quiet state of mind.",
+  "sentences": [
+    { "en": "Stay calm under pressure.", "es": "Mantente calmado bajo presión.", "phon": "stéi kám án-der pré-shur" },
+    { "en": "She spoke in a calm voice.", "es": "Ella habló con voz calmada.", "phon": "shi spók in a kám vóis" },
+    { "en": "Calm brings clarity.", "es": "La calma trae claridad.", "phon": "kám bríngs clá-ri-dad" },
+    { "en": "He remained calm.", "es": "Él se mantuvo calmado.", "phon": "ji ri-méind kám" },
+    { "en": "Find your inner calm.", "es": "Encuentra tu calma interior.", "phon": "faind ior í-ner kám" }
+  ]
+},
+{
+  "word": "Dedicate",
+  "translation": "Dedicarse",
+  "pronunciation": "dé-di-keit",
+  "meaning": "To give time and effort to a purpose.",
+  "sentences": [
+    { "en": "Dedicate yourself to growth.", "es": "Dedícate al crecimiento.", "phon": "dé-di-keit ior-sélf tu gróuth" },
+    { "en": "She is dedicated to her work.", "es": "Ella está dedicada a su trabajo.", "phon": "shi is dé-di-kei-ted tu jer uérk" },
+    { "en": "He dedicated years to study.", "es": "Él dedicó años al estudio.", "phon": "ji dé-di-kei-ted yíers tu stá-di" },
+    { "en": "Dedication leads to success.", "es": "La dedicación lleva al éxito.", "phon": "dé-di-kéi-shon líds tu sok-sés" },
+    { "en": "They dedicate time to family.", "es": "Dedican tiempo a la familia.", "phon": "dei dé-di-keit táim tu fá-mi-li-a" }
+  ]
+},
+{
+  "word": "Efficient",
+  "translation": "Eficiente",
+  "pronunciation": "e-fí-shent",
+  "meaning": "Working in a well-organized and productive way.",
+  "sentences": [
+    { "en": "She is very efficient.", "es": "Ella es muy eficiente.", "phon": "shi is vé-ri e-fí-shent" },
+    { "en": "Work efficiently to save time.", "es": "Trabaja eficientemente para ahorrar tiempo.", "phon": "uérk e-fí-shent-li tu séiv táim" },
+    { "en": "He found an efficient method.", "es": "Él encontró un método eficiente.", "phon": "ji fáund an e-fí-shent mé-thod" },
+    { "en": "Efficiency improves results.", "es": "La eficiencia mejora los resultados.", "phon": "e-fí-shen-si im-prúvs ri-sólts" },
+    { "en": "Be efficient and focused.", "es": "Sé eficiente y enfocado.", "phon": "bi e-fí-shent and fóu-kust" }
+  ]
+},
+{
+  "word": "Encourage",
+  "translation": "Animar",
+  "pronunciation": "en-kó-raich",
+  "meaning": "To give support, confidence, or hope to someone.",
+  "sentences": [
+    { "en": "Encourage your friends.", "es": "Anima a tus amigos.", "phon": "en-kó-raich ior frends" },
+    { "en": "She encouraged me to try.", "es": "Ella me animó a intentarlo.", "phon": "shi en-kó-raicht mi tu trái" },
+    { "en": "We encourage learning.", "es": "Fomentamos el aprendizaje.", "phon": "wi en-kó-raich lér-ning" },
+    { "en": "He felt encouraged.", "es": "Él se sintió animado.", "phon": "ji felt en-kó-raicht" },
+    { "en": "Encouragement builds confidence.", "es": "El ánimo construye confianza.", "phon": "en-kó-raich-ment bílds con-fi-dens" }
+  ]
+},
+{
+  "word": "Forgive",
+  "translation": "Perdonar",
+  "pronunciation": "for-gív",
+  "meaning": "To stop feeling anger toward someone who has done wrong.",
+  "sentences": [
+    { "en": "Forgive and move on.", "es": "Perdona y sigue adelante.", "phon": "for-gív and múv ón" },
+    { "en": "She forgave him.", "es": "Ella lo perdonó.", "phon": "shi for-géiv jim" },
+    { "en": "We must forgive mistakes.", "es": "Debemos perdonar errores.", "phon": "wi mást for-gív mis-téiks" },
+    { "en": "He asked for forgiveness.", "es": "Él pidió perdón.", "phon": "ji áskt for for-gív-nes" },
+    { "en": "Forgiveness brings peace.", "es": "El perdón trae paz.", "phon": "for-gív-nes bríngs pís" }
+  ]
+},
+{
+  "word": "Help",
+  "translation": "Ayudar",
+  "pronunciation": "jelp",
+  "meaning": "To make it easier for someone to do something.",
+  "sentences": [
+    { "en": "Can you help me?", "es": "¿Puedes ayudarme?", "phon": "can iu jelp mi" },
+    { "en": "She helped her friend.", "es": "Ella ayudó a su amiga.", "phon": "shi jelpt jer frend" },
+    { "en": "We help each other.", "es": "Nos ayudamos mutuamente.", "phon": "wi jelp ich ó-der" },
+    { "en": "He needs help.", "es": "Él necesita ayuda.", "phon": "ji níids jelp" },
+    { "en": "Helping is caring.", "es": "Ayudar es cuidar.", "phon": "jel-ping is ké-ring" }
+  ]
+},
+{
+  "word": "Imagine",
+  "translation": "Imaginar",
+  "pronunciation": "i-má-jin",
+  "meaning": "To form a mental picture of something.",
+  "sentences": [
+    { "en": "Imagine a better world.", "es": "Imagina un mundo mejor.", "phon": "i-má-jin a bé-ter wérld" },
+    { "en": "She imagined success.", "es": "Ella imaginó el éxito.", "phon": "shi i-má-jind sok-sés" },
+    { "en": "We imagine new ideas.", "es": "Imaginamos nuevas ideas.", "phon": "wi i-má-jin niu ai-dí-as" },
+    { "en": "He imagined flying.", "es": "Él imaginó volar.", "phon": "ji i-má-jind flái-ing" },
+    { "en": "Imagination is powerful.", "es": "La imaginación es poderosa.", "phon": "i-má-jinéi-shon is páu-er-ful" }
+  ]
+},
+{
+  "word": "Lead",
+  "translation": "Liderar",
+  "pronunciation": "líd",
+  "meaning": "To guide or direct others.",
+  "sentences": [
+    { "en": "She leads with confidence.", "es": "Ella lidera con confianza.", "phon": "shi líds güit con-fi-dens" },
+    { "en": "Lead by example.", "es": "Lidera con el ejemplo.", "phon": "líd bai eg-zám-pol" },
+    { "en": "He led the team to victory.", "es": "Él llevó al equipo a la victoria.", "phon": "ji led de tím tu vík-to-ri" },
+    { "en": "We need strong leaders.", "es": "Necesitamos líderes fuertes.", "phon": "wi níid estróng lí-ders" },
+    { "en": "Leadership requires courage.", "es": "El liderazgo requiere valentía.", "phon": "lí-der-ship ri-kuáirs kó-raj" }
+  ]
+},
+{
+  "word": "Listen",
+  "translation": "Escuchar",
+  "pronunciation": "lí-sen",
+  "meaning": "To pay attention to sound or someone speaking.",
+  "sentences": [
+    { "en": "Listen carefully.", "es": "Escucha con atención.", "phon": "lí-sen kér-fu-li" },
+    { "en": "She listens with empathy.", "es": "Ella escucha con empatía.", "phon": "shi lí-sens güit ém-pa-thi" },
+    { "en": "We must listen to each other.", "es": "Debemos escucharnos mutuamente.", "phon": "wi mást lí-sen tu ich ó-der" },
+    { "en": "He listened to advice.", "es": "Él escuchó consejos.", "phon": "ji lí-sen-d tu ad-váis" },
+    { "en": "Listening builds trust.", "es": "Escuchar construye confianza.", "phon": "lí-sen-ing bílds trást" }
+  ]
+},
+{
+  "word": "Practice",
+  "translation": "Practicar",
+  "pronunciation": "prák-tis",
+  "meaning": "To do something repeatedly to improve skill.",
+  "sentences": [
+    { "en": "Practice makes perfect.", "es": "La práctica hace al maestro.", "phon": "prák-tis méiks pér-fect" },
+    { "en": "She practices every day.", "es": "Ella practica todos los días.", "phon": "shi prák-tis-es évri déi" },
+    { "en": "We practice together.", "es": "Practicamos juntos.", "phon": "wi prák-tis tu-gé-der" },
+    { "en": "He practiced his speech.", "es": "Él practicó su discurso.", "phon": "ji prák-tis-d jis spích" },
+    { "en": "Practice builds confidence.", "es": "La práctica construye confianza.", "phon": "prák-tis bílds con-fi-dens" }
+  ]
+},
+{
+  "word": "Reflect",
+  "translation": "Reflexionar",
+  "pronunciation": "ri-flékt",
+  "meaning": "To think deeply or carefully about something.",
+  "sentences": [
+    { "en": "Reflect on your actions.", "es": "Reflexiona sobre tus acciones.", "phon": "ri-flékt on ior ák-shons" },
+    { "en": "She reflected on her choices.", "es": "Ella reflexionó sobre sus decisiones.", "phon": "shi ri-flék-ted on jer chóis-es" },
+    { "en": "We reflect before deciding.", "es": "Reflexionamos antes de decidir.", "phon": "wi ri-flékt bi-fór di-sái-ding" },
+    { "en": "He took time to reflect.", "es": "Él se tomó tiempo para reflexionar.", "phon": "ji túk táim tu ri-flékt" },
+    { "en": "Reflection brings wisdom.", "es": "La reflexión trae sabiduría.", "phon": "ri-flék-shon bríngs wís-dom" }
+  ]
+},
+{
+  "word": "Shine",
+  "translation": "Brillar",
+  "pronunciation": "sháin",
+  "meaning": "To emit light or stand out brightly.",
+  "sentences": [
+    { "en": "Let your light shine.", "es": "Deja que tu luz brille.", "phon": "let ior láit sháin" },
+    { "en": "She shines with joy.", "es": "Ella brilla con alegría.", "phon": "shi sháins güit yói" },
+    { "en": "We shine when we help.", "es": "Brillamos cuando ayudamos.", "phon": "wi sháin güen wi jelp" },
+    { "en": "He shined in the performance.", "es": "Él brilló en la presentación.", "phon": "ji sháind in de per-fór-mans" },
+    { "en": "Shine your light on others.", "es": "Brilla tu luz sobre los demás.", "phon": "sháin ior láit on ó-derz" }
+  ]
+},
+{
+  "word": "Strengthen",
+  "translation": "Fortalecer",
+  "pronunciation": "strén-zen",
+  "meaning": "To make something stronger or more effective.",
+  "sentences": [
+    { "en": "Strengthen your skills.", "es": "Fortalece tus habilidades.", "phon": "strén-zen ior skíls" },
+    { "en": "She strengthened the team.", "es": "Ella fortaleció al equipo.", "phon": "shi strén-zen-d de tím" },
+    { "en": "We strengthen our bonds.", "es": "Fortalecemos nuestros lazos.", "phon": "wi strén-zen auer bónds" },
+    { "en": "He wants to strengthen his body.", "es": "Él quiere fortalecer su cuerpo.", "phon": "ji uánts tu strén-zen jis bó-di" },
+    { "en": "Practice strengthens memory.", "es": "La práctica fortalece la memoria.", "phon": "prák-tis strén-zens mém-o-ri" }
+  ]
+},
+{
+  "word": "Try",
+  "translation": "Intentar",
+  "pronunciation": "trái",
+  "meaning": "To make an effort to do something.",
+  "sentences": [
+    { "en": "Try again.", "es": "Intenta de nuevo.", "phon": "trái a-gén" },
+    { "en": "She tried her best.", "es": "Ella hizo su mejor esfuerzo.", "phon": "shi tráid jer bést" },
+    { "en": "We try new things.", "es": "Intentamos cosas nuevas.", "phon": "wi trái niu things" },
+    { "en": "He tried to help.", "es": "Él intentó ayudar.", "phon": "ji tráid tu jelp" },
+    { "en": "Trying is learning.", "es": "Intentar es aprender.", "phon": "trái-ing is lér-ning" }
+  ]
+},
+{
+  "word": "Value",
+  "translation": "Valorar",
+  "pronunciation": "vá-liu",
+  "meaning": "To consider something important or beneficial.",
+  "sentences": [
+    { "en": "Value your time.", "es": "Valora tu tiempo.", "phon": "vá-liu ior táim" },
+    { "en": "She values honesty.", "es": "Ella valora la honestidad.", "phon": "shi vá-lius ón-es-ti-dad" },
+    { "en": "We value friendship.", "es": "Valoramos la amistad.", "phon": "wi vá-liu frend-ship" },
+    { "en": "He values hard work.", "es": "Él valora el trabajo duro.", "phon": "ji vá-lius jard uérk" },
+    { "en": "Value what you have.", "es": "Valora lo que tienes.", "phon": "vá-liu wát iu jav" }
+  ]
+},
+{
+  "word": "Win",
+  "translation": "Ganar",
+  "pronunciation": "wín",
+  "meaning": "To achieve victory or success.",
+  "sentences": [
+    { "en": "She wins every time.", "es": "Ella gana cada vez.", "phon": "shi wíns évri táim" },
+    { "en": "Win with integrity.", "es": "Gana con integridad.", "phon": "wín güit in-té-gri-dad" },
+    { "en": "We want to win.", "es": "Queremos ganar.", "phon": "wi uánt tu wín" },
+    { "en": "He won the prize.", "es": "Él ganó el premio.", "phon": "ji wón de práiz" },
+    { "en": "Winning feels great.", "es": "Ganar se siente genial.", "phon": "wín-ing fíels gréit" }
+  ]
+},
+{
+  "word": "Achieve",
+  "translation": "Lograr",
+  "pronunciation": "a-chív",
+  "meaning": "To reach a goal through effort.",
+  "sentences": [
+    { "en": "You can achieve your dreams.", "es": "Puedes lograr tus sueños.", "phon": "iu can a-chív ior dríms" },
+    { "en": "She achieved great success.", "es": "Ella logró gran éxito.", "phon": "shi a-chívd greit sok-sés" },
+    { "en": "Achieve your goals step by step.", "es": "Logra tus metas paso a paso.", "phon": "a-chív ior góls step bai step" },
+    { "en": "They achieved victory together.", "es": "Lograron la victoria juntos.", "phon": "dei a-chívd vík-to-ri tu-gé-der" },
+    { "en": "Hard work helps you achieve.", "es": "El trabajo duro te ayuda a lograr.", "phon": "jard uérk jelps iu a-chív" }
+  ]
+},
+{
+  "word": "Believe",
+  "translation": "Creer",
+  "pronunciation": "be-lív",
+  "meaning": "To accept something as true or real.",
+  "sentences": [
+    { "en": "I believe in you.", "es": "Creo en ti.", "phon": "ai be-lív in iu" },
+    { "en": "She believes in miracles.", "es": "Ella cree en milagros.", "phon": "shi be-lívs in mí-ra-cols" },
+    { "en": "They believe it's possible.", "es": "Ellos creen que es posible.", "phon": "dei be-lív its pó-si-bol" },
+    { "en": "Believe in your dreams.", "es": "Cree en tus sueños.", "phon": "be-lív in ior dríms" },
+    { "en": "We believe in love.", "es": "Creemos en el amor.", "phon": "wi be-lív in lóv" }
+  ]
+},
+{
+  "word": "Motivate",
+  "translation": "Motivar",
+  "pronunciation": "mó-ti-veit",
+  "meaning": "To provide someone with a reason to act or achieve.",
+  "sentences": [
+    { "en": "I want to motivate others.", "es": "Quiero motivar a otros.", "phon": "ai uánt tu mó-ti-veit ó-derz" },
+    { "en": "She motivated the team.", "es": "Ella motivó al equipo.", "phon": "shi mó-ti-vei-ted de tím" },
+    { "en": "Motivate yourself daily.", "es": "Motívate cada día.", "phon": "mó-ti-veit ior-sélf déi-li" },
+    { "en": "They felt motivated.", "es": "Ellos se sintieron motivados.", "phon": "dei felt mó-ti-vei-ted" },
+    { "en": "Motivation leads to success.", "es": "La motivación lleva al éxito.", "phon": "mó-ti-véi-shon líds tu sok-sés" }
+  ]
+},
+{
+  "word": "Respect",
+  "translation": "Respeto",
+  "pronunciation": "res-pékt",
+  "meaning": "A feeling of deep admiration for someone or something.",
+  "sentences": [
+    { "en": "Respect others always.", "es": "Respeta siempre a los demás.", "phon": "res-pékt ó-derz ól-wéiz" },
+    { "en": "She earned their respect.", "es": "Ella se ganó su respeto.", "phon": "shi érnd der res-pékt" },
+    { "en": "Respect is mutual.", "es": "El respeto es mutuo.", "phon": "res-pékt is miú-chu-al" },
+    { "en": "They showed great respect.", "es": "Mostraron gran respeto.", "phon": "dei shóud gréit res-pékt" },
+    { "en": "Respect builds trust.", "es": "El respeto construye confianza.", "phon": "res-pékt bílds trást" }
+  ]
+},
+{
+  "word": "Trust",
+  "translation": "Confianza",
+  "pronunciation": "trást",
+  "meaning": "Firm belief in the reliability or truth of someone or something.",
+  "sentences": [
+    { "en": "I trust you.", "es": "Confío en ti.", "phon": "ai trást iu" },
+    { "en": "She earned my trust.", "es": "Ella se ganó mi confianza.", "phon": "shi érnd mai trást" },
+    { "en": "Trust is essential.", "es": "La confianza es esencial.", "phon": "trást is e-sén-shal" },
+    { "en": "They trust each other.", "es": "Confían el uno en el otro.", "phon": "dei trást ich ó-der" },
+    { "en": "Trust takes time.", "es": "La confianza toma tiempo.", "phon": "trást téiks táim" }
+  ]
+},
+{
+  "word": "Vision",
+  "translation": "Visión",
+  "pronunciation": "ví-shon",
+  "meaning": "The ability to think about or plan the future with imagination or wisdom.",
+  "sentences": [
+    { "en": "She has a clear vision.", "es": "Ella tiene una visión clara.", "phon": "shi jas a clíer ví-shon" },
+    { "en": "Vision guides our actions.", "es": "La visión guía nuestras acciones.", "phon": "ví-shon gáids auer ák-shons" },
+    { "en": "He shared his vision for the company.", "es": "Compartió su visión para la empresa.", "phon": "ji shérd jis ví-shon for de cóm-pa-ni" },
+    { "en": "A strong vision inspires others.", "es": "Una visión fuerte inspira a otros.", "phon": "a estróng ví-shon in-spái-rs ó-derz" },
+    { "en": "Vision is the first step.", "es": "La visión es el primer paso.", "phon": "ví-shon is de férst stép" }
+  ]
+},
+
+{
+  "word": "Grow",
+  "translation": "Crecer",
+  "pronunciation": "gróu",
+  "meaning": "To increase in size, number, or strength.",
+  "sentences": [
+    { "en": "Plants grow with sunlight.", "es": "Las plantas crecen con luz solar.", "phon": "plánts gróu güit són-lait" },
+    { "en": "She grew fast.", "es": "Ella creció rápido.", "phon": "shi grú fást" },
+    { "en": "We grow together.", "es": "Crecemos juntos.", "phon": "wi gróu tu-gé-der" },
+    { "en": "He wants to grow.", "es": "Él quiere crecer.", "phon": "ji uánts tu gróu" },
+    { "en": "Grow your skills.", "es": "Desarrolla tus habilidades.", "phon": "gróu ior skíls" }
+  ]
+}
+];
+    words.sort((a, b) => a.word.localeCompare(b.word));
+
+    const selector = document.getElementById('wordSelector');
+    const tableBody = document.querySelector('#wordTable tbody');
+    const translationResult = document.getElementById('translationResult');
+
+    words.forEach((entry, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = entry.word;
+      selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', () => {
+      const index = selector.value;
+      tableBody.innerHTML = '';
+
+      if (index !== '') {
+        const entry = words[index];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.word}</td>
+          <td>${entry.meaning}</td>
+          <td>${entry.translation}</td>
+          <td>${translateMeaning(entry.meaning)}</td>
+          <td>${entry.pronunciation}</td>
+        `;
+        row.addEventListener('click', () => showSentences(entry));
+        tableBody.appendChild(row);
+      }
+    });
+
+    function translateMeaning(meaning) {
+      const map = {
+        "To reach a goal through effort.": "Alcanzar una meta mediante esfuerzo.",
+        "To accept something as true or real.": "Aceptar algo como verdadero o real.",
+        "To bring something into existence.": "Crear algo que no existía.",
+        "To make a choice or judgment.": "Tomar una decisión o juicio.",
+        "Physical or mental energy used to do something.": "Energía física o mental para hacer algo."
+        // Agrega más si lo deseas
+      };
+      return map[meaning] || "Traducción no disponible.";
+    }
+
+    function showSentences(entry) {
+      const sentenceRow = document.createElement('tr');
+      sentenceRow.className = 'sentence-row';
+      const cell = document.createElement('td');
+      cell.colSpan = 5;
+
+      cell.innerHTML = entry.sentences.map(s => `
+        <div class="sentence" onclick="speak('${s.en}')">
+          <strong>EN:</strong> ${s.en}
+          <button class="audio-button" title="Escuchar">🔊</button><br/>
+          <strong>ES:</strong> ${s.es}<br/>
+          <strong>Pron:</strong> ${s.phon}
+        </div>
+      `).join('');
+
+      sentenceRow.appendChild(cell);
+      tableBody.appendChild(sentenceRow);
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    }
+
+   async function translateSentence() {
+  const input = document.getElementById('spanishInput').value.trim();
+  if (!input) return;
+
+  const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=en&dt=t&q=${encodeURIComponent(input)}`);
+  const data = await response.json();
+  const translated = data[0][0][0];
+ const phonetic = generateSpanglishPhonetic(translated); // Pronunciación aproximada
+
+  // Dividir en oraciones usando punto como separador
+  const sentences = translated.split(/(?<=[.?!])\s+/);
+
+ translationResult.innerHTML = `
+    <p><strong>Oración en español:</strong> ${input}</p>
+    <p><strong>Traducción en inglés:</strong> ${translated}
+      <button class="audio-button" onclick="speak('${translated}')">🔊</button>
+    </p>
+    <p><strong>Pronunciación aproximada:</strong> ${phonetic}</p>
+  `;
+}
+
+
+function speak(text) {
+  const rate = parseFloat(document.getElementById('rateControl').value);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = rate;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  speechSynthesis.speak(utterance);
+}
+
+document.getElementById('rateControl').addEventListener('input', function() {
+  document.getElementById('rateValue').textContent = this.value;
+});
+
+
+function generateSpanglishPhonetic(text) { // Crear una función basada en sonidos, no palabras
+  return text
+    .toLowerCase()
+
+    // Saludos y cortesía
+.replace(/hello/g, "jelou")
+.replace(/hi/g, "jai")
+.replace(/good morning/g, "gud mornin")
+.replace(/good afternoon/g, "gud afternun")
+.replace(/good night/g, "gud nait")
+.replace(/how are you/g, "jau ar iu")
+.replace(/nice to meet you/g, "nais tu mit iu")
+.replace(/thank you/g, "zenk iu")
+.replace(/please/g, "plis")
+.replace(/you're welcome/g, "iur güelcom")
+.replace(/excuse me/g, "eskus mi")
+.replace(/sorry/g, "sorri")
+.replace(/see you later/g, "siu leirer")
+
+// Presentaciones
+.replace(/what is your name/g, "guat is ior neim")
+.replace(/my name is/g, "mai neim is")
+.replace(/i am/g, "ai am")
+.replace(/you are/g, "iu ar")
+.replace(/i am from/g, "ai am from")
+.replace(/where are you from/g, "güer ar iu from")
+.replace(/how old are you/g, "jau old ar iu")
+
+// Conversación básica
+.replace(/do you speak english/g, "du iu espik inglish")
+.replace(/i speak spanish/g, "ai espik spanish")
+.replace(/i don't understand/g, "ai dont anderstend")
+.replace(/i understand/g, "ai anderstend")
+.replace(/i don't know/g, "ai dont nou")
+.replace(/i know/g, "ai nou")
+.replace(/i think so/g, "ai zink so")
+.replace(/i hope so/g, "ai joup so")
+.replace(/yes/g, "ies")
+.replace(/no/g, "nou")
+.replace(/maybe/g, "meibi")
+
+// Ubicación y direcciones
+.replace(/where is/g, "güer is")
+.replace(/where is the bathroom/g, "güer is de bazrum")
+.replace(/how do i get to/g, "jau du ai guet tu")
+.replace(/how much is it/g, "jau mach is it")
+.replace(/turn left/g, "tern left")
+.replace(/turn right/g, "tern rait")
+.replace(/go straight/g, "go streit")
+
+// Tiempo y clima
+.replace(/what time is it/g, "guat taim is it")
+.replace(/it's hot/g, "its jat")
+.replace(/it's cold/g, "its kold")
+.replace(/it's raining/g, "its reinin")
+.replace(/it's sunny/g, "its soni")
+
+// Emociones y estados
+.replace(/i am happy/g, "ai am japi")
+.replace(/i am sad/g, "ai am sad")
+.replace(/i am tired/g, "ai am taird")
+.replace(/i am hungry/g, "ai am jongri")
+.replace(/i am sick/g, "ai am sik")
+.replace(/i feel good/g, "ai fil gud")
+.replace(/i feel bad/g, "ai fil bad")
+.replace(/i love you/g, "ai lov iu")
+.replace(/i miss you/g, "ai mis iu")
+
+// Ayuda y necesidades
+.replace(/can you help me/g, "ken iu jelp mi")
+.replace(/i need help/g, "ai nid jelp")
+.replace(/i need/g, "ai nid")
+.replace(/i want/g, "ai guant")
+.replace(/i want to go/g, "ai guant tu go")
+.replace(/i have to go/g, "ai jav tu go")
+
+// Comida y bebida
+.replace(/i am thirsty/g, "ai am zershti")
+.replace(/i want water/g, "ai guant guater")
+.replace(/i want food/g, "ai guant fud")
+.replace(/i like ice cream/g, "ai laik ais krim")
+.replace(/i want to eat/g, "ai guant tu it")
+.replace(/i ate/g, "ai eit")
+.replace(/ice cream/g, "ais krim")
+
+
+    // Finales comunes
+    .replace(/tion\b/g, "shon")
+    .replace(/sion\b/g, "shon")
+    .replace(/ing\b/g, "in")
+    .replace(/ed\b/g, "t")
+    .replace(/ly\b/g, "li")
+    .replace(/ment\b/g, "mento")
+    .replace(/ness\b/g, "nes")
+
+    // Combinaciones fonéticas
+    .replace(/ough/g, "of")
+    .replace(/ph/g, "f")
+    .replace(/th/g, "z")
+    .replace(/sh/g, "sh")
+    .replace(/ch/g, "ch")
+    .replace(/wh/g, "ju")
+    .replace(/qu/g, "ku")
+    .replace(/wr/g, "r")
+    .replace(/kn/g, "n")
+    .replace(/gn/g, "n")
+    .replace(/mb\b/g, "m")
+
+    // Vocales y consonantes adaptadas
+    .replace(/a/g, "ai")
+    .replace(/e/g, "i")
+    .replace(/i/g, "ai")
+    .replace(/o/g, "ou")
+    .replace(/u/g, "iu")
+
+    .replace(/c(?=[eiy])/g, "s")
+    .replace(/c/g, "k")
+    .replace(/g(?=[eiy])/g, "j")
+    .replace(/g/g, "g")
+    .replace(/j/g, "y")
+    .replace(/v/g, "b")
+    .replace(/w/g, "gu")
+    .replace(/x/g, "ks")
+    .replace(/y/g, "i")
+
+    // Palabras comunes
+    .replace(/\btoday\b/g, "tudai")
+    .replace(/\bwent\b/g, "uent")
+    .replace(/\bto\b/g, "tu")
+    .replace(/\bthe\b/g, "de")
+    .replace(/\bpark\b/g, "park")
+    .replace(/\bwith\b/g, "uiz")
+    .replace(/\bmy\b/g, "maai")
+    .replace(/\bfamily\b/g, "fámli")
+    .replace(/\bwe\b/g, "wui")
+    .replace(/\bplayed\b/g, "pleid")
+    .replace(/\bsoccer\b/g, "soker")
+    .replace(/\bate\b/g, "eit")
+    .replace(/\bwas\b/g, "uas")
+    .replace(/\bwonderful\b/g, "uanderful")
+    .replace(/\bday\b/g, "dei")
+    .replace(/\band\b/g, "and")
+    .replace(/\bis\b/g, "is")
+    .replace(/\bin\b/g, "in")
+    .replace(/\bon\b/g, "on")
+    .replace(/\bfor\b/g, "for")
+    .replace(/\bof\b/g, "of")
+    .replace(/\byou\b/g, "iu")
+    .replace(/\bi\b/g, "ai")
+    .replace(/\bam\b/g, "am")
+    .replace(/\bare\b/g, "ar")
+    .replace(/\bhave\b/g, "jav")
+    .replace(/\bhas\b/g, "jas")
+    .replace(/\bcan\b/g, "ken")
+    .replace(/\bdo\b/g, "du")
+    .replace(/\bbe\b/g, "bi")
+    .replace(/\bnot\b/g, "nat")
+    .replace(/\byes\b/g, "ies")
+    .replace(/\bno\b/g, "nou")
+    .replace(/\bplease\b/g, "plis")
+    .replace(/\bthanks\b/g, "zenks")
+    .replace(/\bthank\b/g, "zenk")
+
+    // Limpieza final
+    .replace(/[^a-z\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+
+function clearTranslation() {
+  // Limpiar campo de texto y resultado
+  document.getElementById('spanishInput').value = '';
+  document.getElementById('translationResult').innerHTML = '';
+
+  // Limpiar tabla
+  const tableBody = document.querySelector('#wordTable tbody');
+  tableBody.innerHTML = '';
+
+  // Reiniciar dropdown
+  const selector = document.getElementById('wordSelector');
+  selector.selectedIndex = 0;
+}
+
+  </script>
+
+</body>
+</html>
