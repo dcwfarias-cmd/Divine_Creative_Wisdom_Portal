@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Divine Creative Wisdom Portal</title>
+  <style>
+    :root {
+      --gold: #d4af37;
+      --deep-blue: #0a0f2c;
+      --light: #f9f9f9;
+      --font: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--deep-blue);
+      color: var(--light);
+    }
+
+    .header, .footer {
+      text-align: center;
+      padding: 1rem;
+      background: var(--gold);
+      color: var(--deep-blue);
+    }
+
+    .container {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    select, input[type="email"], button {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      width: 100%;
+    }
+
+    select {
+      background: var(--deep-blue);
+      color: var(--gold);
+      border: 2px solid var(--gold);
+    }
+
+    input[type="email"] {
+      background: var(--light);
+      color: var(--deep-blue);
+    }
+
+    .cta {
+      background: var(--gold);
+      color: var(--deep-blue);
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .lang-toggle {
+      background: var(--deep-blue);
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+
+    @media (min-width: 600px) {
+      .container {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>🌌 Divine Creative Wisdom Portal</h1>
+    <button class="lang-toggle">EN/ES</button>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>✨ Select Your App</h2>
+      <select id="appSelector">
+        <option value="melody">🎵 Export Melody</option>
+        <option value="branding">🌟 Branding Kit</option>
+        <option value="training">📚 Training Portal</option>
+      </select>
+
+      <input type="email" id="emailInput" placeholder="Enter your email" />
+      <button class="cta" onclick="handleExport()">Export & Send</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 Divine Creative Wisdom, LLC</p>
+  </footer>
+
+  <script>
+    document.querySelector('.lang-toggle').addEventListener('click', () => {
+      const h2 = document.querySelector('h2');
+      const btn = document.querySelector('.cta');
+      const selector = document.getElementById('appSelector');
+      const email = document.getElementById('emailInput');
+
+      if (h2.textContent.includes('Select')) {
+        h2.textContent = '✨ Selecciona tu Aplicación';
+        btn.textContent = 'Exportar y Enviar';
+        email.placeholder = 'Ingresa tu correo electrónico';
+        selector.options[0].text = '🎵 Exportar Melodía';
+        selector.options[1].text = '🌟 Kit de Marca';
+        selector.options[2].text = '📚 Portal de Entrenamiento';
+      } else {
+        h2.textContent = '✨ Select Your App';
+        btn.textContent = 'Export & Send';
+        email.placeholder = 'Enter your email';
+        selector.options[0].text = '🎵 Export Melody';
+        selector.options[1].text = '🌟 Branding Kit';
+        selector.options[2].text = '📚 Training Portal';
+      }
+    });
+
+    function handleExport() {
+      const app = document.getElementById('appSelector').value;
+      const email = document.getElementById('emailInput').value;
+
+      if (!email) {
+        alert("Please enter your email.");
+        return;
+      }
+
+      // Simulate file download
+      const blob = new Blob([`Exported content for ${app}`], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${app}-export.txt`;
+      link.click();
+
+      // Simulate backend email delivery
+      console.log(`Sending ${app} export to ${email}...`);
+      alert(`Exported and sent to ${email}`);
+    }
+  </script>
+</body>
+</html>
